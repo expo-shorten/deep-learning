@@ -1,5 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from pytube import YouTube
 from pytube.exceptions import RegexMatchError, VideoUnavailable, PytubeError
 from text_recognition import async_text_recognition
@@ -17,6 +19,16 @@ app = FastAPI(
     version="0.0.1"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],   
+    allow_headers=["*"],
+)
+
+class URL(BaseModel):
+    url: str
 
 @app.get('/')
 async def hello_world():
@@ -37,10 +49,9 @@ async def upload_video(video: UploadFile = File(...)):
         shutil.copyfileobj(video.file, buffer)
     
     await extract_audio(input_path, output_path)
-    # 인공지능 처리
     print('음성에서 텍스트를 추출하는 중 입니다...')
-    origin = ['치피치피차파차파', '두비두비다바다바', '마기코비 두비두비', '붐 붐 붐 붐']
-    # origin = await async_text_recognition('input/uploaded_vid/input.mp3')
+    # origin = ['치피치피차파차파', '두비두비다바다바', '마기코비 두비두비', '붐 붐 붐 붐']
+    origin = await async_text_recognition('input/uploaded_vid/input.mp3')
     print('추출된 텍스트를 요약하는 중 입니다...')
     # 챗지피티로 요약한 내용 리턴 
     summed = ''
@@ -52,7 +63,8 @@ async def upload_video(video: UploadFile = File(...)):
 
 
 @app.post("/upload_url/")
-async def upload_url(url: str):
+async def upload_url(url: URL):
+    url = url.url
     try:
         yt = YouTube(url)
         duration_seconds = yt.length
@@ -62,13 +74,13 @@ async def upload_url(url: str):
         
         yt.streams.filter(only_audio=True).first().download(output_path='input/uploaded_url/',
                                                             filename='input.mp3')
-        # 인공지능 처리
         print('음성에서 텍스트를 추출하는 중 입니다...')
-        origin = ['yee', 'yee']
-        # origin = await async_text_recognition('input/uploaded_url/input.mp3')
+        # origin = ['yee', 'yee']
+        origin = await async_text_recognition('input/uploaded_url/input.mp3')
         print('추출된 텍스트를 요약하는 중 입니다...')
         summed = ''
-        
+        # summed = gpt_process(origin)
+         
         # 챗지피티로 요약한 내용 리턴
         return JSONResponse(content={"response": "\n".join(origin),
                                      "summary": "".join(summed)})
@@ -80,14 +92,15 @@ async def upload_url(url: str):
     except VideoUnavailable:
         raise HTTPException(status_code=400,
                             detail='해당 동영상을 가져올 수 없습니다.')
+                            
         
 # 파일 확장자 return
 async def get_file_extension(filename: str):
     return filename.split(".")[-1]
     
 
+# 비디오 파일에서 음성 파일 추출
 async def extract_audio(input_file: str, output_file: str):
-    # 비디오 파일에서 음성 파일 추출
     video_clip = VideoFileClip(input_file)
     audio_clip = video_clip.audio
     audio_clip.write_audiofile(output_file)
@@ -97,3 +110,21 @@ async def extract_audio(input_file: str, output_file: str):
 
 if __name__ == '__main__':
     uvicorn.run('main:app', port=1557, host='0.0.0.0', reload=True)
+
+# from fastapi import FastAPI
+# from pydantic import BaseModel
+# import uvicorn
+
+# app = FastAPI()
+
+# class URL(BaseModel):
+#     url: str
+
+# @app.post("/upload_url/")
+# async def upload_url(url: URL):
+#     received_url = url.url
+#     # 여기에 받은 URL을 처리하는 코드 추가
+#     return {"received_url": received_url}
+
+# if __name__ == '__main__':
+#     uvicorn.run('main:app', port=1557, host='0.0.0.0', reload=True)
