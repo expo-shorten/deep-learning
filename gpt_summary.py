@@ -1,6 +1,6 @@
 from langchain.chains.mapreduce import MapReduceChain
 from langchain.chains import ReduceDocumentsChain, MapReduceDocumentsChain
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
