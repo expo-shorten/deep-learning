@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pytube import YouTube
 from pytube.exceptions import RegexMatchError, VideoUnavailable, PytubeError
 from text_recognition import async_text_recognition
-from gpt_summary import gpt_process
+from gpt_summary import summary_text
 from moviepy.editor import VideoFileClip
 import shutil
 import config
@@ -50,8 +50,8 @@ async def upload_video(video: UploadFile = File(...)):
     
     await extract_audio(input_path, output_path)
     print('음성에서 텍스트를 추출하는 중 입니다...')
-    # origin = ['치피치피차파차파', '두비두비다바다바', '마기코비 두비두비', '붐 붐 붐 붐']
-    origin = await async_text_recognition('input/uploaded_vid/input.mp3')
+    origin = ['치피치피차파차파', '두비두비다바다바', '마기코비 두비두비', '붐 붐 붐 붐']
+    # origin = await async_text_recognition('input/uploaded_vid/input.mp3')
     print('추출된 텍스트를 요약하는 중 입니다...')
     # 챗지피티로 요약한 내용 리턴 
     summed = ''
@@ -75,8 +75,8 @@ async def upload_url(url: URL):
         yt.streams.filter(only_audio=True).first().download(output_path='input/uploaded_url/',
                                                             filename='input.mp3')
         print('음성에서 텍스트를 추출하는 중 입니다...')
-        # origin = ['yee', 'yee']
-        origin = await async_text_recognition('input/uploaded_url/input.mp3')
+        origin = ['yee', 'yee']
+        # origin = await async_text_recognition('input/uploaded_url/input.mp3')
         print('추출된 텍스트를 요약하는 중 입니다...')
         summed = ''
         # summed = gpt_process(origin)
