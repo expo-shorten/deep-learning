@@ -1,9 +1,7 @@
 import whisper
 from datetime import timedelta
-from googletrans import Translator
 
 model = whisper.load_model('base')
-trans = Translator()
 
 def sec_to_hour_min_sec(seconds):
     dt = timedelta(seconds=seconds)
