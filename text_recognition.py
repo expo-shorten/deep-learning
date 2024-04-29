@@ -1,7 +1,7 @@
 import whisper
 from datetime import timedelta
 
-model = whisper.load_model('base')
+model = whisper.load_model('small')
 
 def sec_to_hour_min_sec(seconds):
     dt = timedelta(seconds=seconds)
