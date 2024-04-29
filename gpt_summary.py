@@ -2,7 +2,7 @@ import re
 import config
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains import ReduceDocumentsChain
@@ -19,7 +19,7 @@ def summary_text(text):
         separator=".",  # 분할기준
         chunk_size=4000,   # 사이즈
         chunk_overlap=50, # 중첩 사이즈
-    )
+    ) 
     text = remove_brackets(''.join(text))
     
     split_docs = text_splitter.split_text(text)
@@ -29,10 +29,8 @@ def summary_text(text):
     {pages}
     answer:"""
 
-    # Map 프롬프트 완성
     map_prompt = PromptTemplate.from_template(map_template)
 
-    # Map에서 수행할 LLMChain 정의
     llm = ChatOpenAI(temperature=0, 
                     model_name='gpt-3.5-turbo', api_key=config.OPENAI_API_KEY)
     map_chain = LLMChain(llm=llm, prompt=map_prompt)
@@ -50,14 +48,12 @@ def summary_text(text):
         document_variable_name="doc_summaries"
     )
 
-    # Map 문서를 통합하고 순차적으로 Reduce합니다.
     reduce_documents_chain = ReduceDocumentsChain(
         combine_documents_chain=combine_documents_chain,
         collapse_documents_chain=combine_documents_chain,
         token_max=4095,
     )
 
-    # 문서들에 체인을 매핑하여 결합하고, 그 다음 결과들을 결합합니다.
     map_reduce_chain = MapReduceDocumentsChain(
         llm_chain=map_chain,
         reduce_documents_chain=reduce_documents_chain,
@@ -67,3 +63,23 @@ def summary_text(text):
     
     result = map_reduce_chain.run(split_docs)
     return result
+
+
+def request_message(text, question):
+    print('추가적인 답변 생성 준비 중...')
+    llm = ChatOpenAI(temperature=0, 
+                    model_name='gpt-3.5-turbo', 
+                    api_key=config.OPENAI_API_KEY)
+    
+    map_template = f"""Please answer the summary below according to the user's question. The answer should be provided in Korean.
+
+    {text}
+
+    {question}
+
+    answer:"""
+
+    ans = llm.predict(map_template)
+    print('답변 생성 완료')
+    
+    return ans
